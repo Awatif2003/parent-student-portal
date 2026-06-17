@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getAttendanceSummary } from "../../services/portalDataService";
+import { useSearchParams } from "react-router-dom";
+import { getAttendanceSummary, getStudentAttendance } from "../../services/portalDataService";
+import { normalizeCollectionResponse } from "../../utils/portalIdentity";
 
 function AttendancePreview() {
+  const [searchParams] = useSearchParams();
+  const selectedRecordId = searchParams.get("attendanceId") || searchParams.get("studentId");
   const [attendanceData, setAttendanceData] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -10,7 +14,9 @@ function AttendancePreview() {
     setIsLoading(true);
     setError("");
 
-    return getAttendanceSummary()
+    const loader = selectedRecordId ? getStudentAttendance(selectedRecordId) : getAttendanceSummary();
+
+    return loader
       .then((data) => {
         setAttendanceData(data || {});
       })
@@ -20,7 +26,7 @@ function AttendancePreview() {
       .finally(() => {
         setIsLoading(false);
       });
-  }, []);
+  }, [selectedRecordId]);
 
   const stats = useMemo(() => {
     const values = [
@@ -33,11 +39,19 @@ function AttendancePreview() {
     return values.filter(([, value]) => value !== undefined && value !== null);
   }, [attendanceData]);
 
-  const recentRecords = Array.isArray(attendanceData.results)
-    ? attendanceData.results
-    : Array.isArray(attendanceData.recent_records)
-      ? attendanceData.recent_records
-      : [];
+  const recentRecords = useMemo(() => {
+    const records = normalizeCollectionResponse(attendanceData);
+
+    if (records.length) {
+      return records;
+    }
+
+    if (attendanceData?.id && attendanceData?.student_name) {
+      return [attendanceData];
+    }
+
+    return Array.isArray(attendanceData.recent_records) ? attendanceData.recent_records : [];
+  }, [attendanceData]);
 
   useEffect(() => {
     loadAttendance();
@@ -48,7 +62,7 @@ function AttendancePreview() {
       <div className="panel-header">
         <div>
           <h3>Attendance Records</h3>
-          <p>Latest student attendance from the API.</p>
+          <p>{selectedRecordId ? "Selected attendance record from the API." : "Latest attendance records from the API."}</p>
         </div>
         <button className="panel-action" type="button" onClick={loadAttendance} disabled={isLoading}>
           {isLoading ? "Loading..." : "Refresh"}
@@ -87,7 +101,7 @@ function AttendancePreview() {
                 </tr>
               </thead>
               <tbody>
-                {attendanceData.results.slice(0, 6).map((record) => (
+                {recentRecords.slice(0, 6).map((record) => (
                   <tr key={record.id}>
                     <td>
                       <strong>{record.student_name}</strong>

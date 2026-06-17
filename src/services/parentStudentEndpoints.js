@@ -29,6 +29,7 @@ export const PARENT_STUDENT_ENDPOINTS = {
   },
   attendance: {
     students: "/attendance/students/",
+    myChildren: "/attendance/parent/children/",
     studentDetail: (id) => `/attendance/students/${id}/`,
     bulk: "/attendance/students/bulk/",
     byDate: (date) => `/attendance/students/by-date/${date}/`,

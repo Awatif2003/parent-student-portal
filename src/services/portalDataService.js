@@ -8,6 +8,9 @@ export const getStudentProfile = (studentId) => apiRequest(PARENT_STUDENT_ENDPOI
 
 export const getAttendanceSummary = () => apiRequest(PARENT_STUDENT_ENDPOINTS.attendance.summary);
 
+export const getStudentAttendance = (studentId) =>
+  apiRequest(PARENT_STUDENT_ENDPOINTS.attendance.studentDetail(studentId));
+
 export const getAttendanceByStream = (streamId) =>
   apiRequest(PARENT_STUDENT_ENDPOINTS.attendance.byStream(streamId));
 

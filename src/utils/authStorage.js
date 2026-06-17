@@ -63,6 +63,8 @@ export const getUserRole = (user) => {
     primaryRoleAssignment?.role_name ||
     role?.codename ||
     role?.name ||
+    user?.tenant?.role ||
+    user?.tenant?.role_name ||
     user?.role_codename ||
     user?.role_name ||
     (typeof role === "string" ? role : "");

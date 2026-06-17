@@ -760,6 +760,46 @@ select {
   overflow-x: auto;
 }
 
+.table-panel {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #dce5ef;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0 12px 26px rgba(18, 54, 111, 0.05);
+}
+
+.table-controls,
+.table-footer {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.table-length,
+.table-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #172033;
+  font-size: 14px;
+}
+
+.table-length select,
+.table-search input {
+  min-height: 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 0 8px;
+  background: #fff;
+}
+
+.table-search input {
+  width: min(220px, 42vw);
+}
+
 .data-table {
   width: 100%;
   min-width: 760px;
@@ -782,11 +822,83 @@ select {
   text-transform: uppercase;
 }
 
+.student-detail-table th,
+.student-detail-table td {
+  border: 1px solid #dce5ef;
+}
+
+.student-detail-table th {
+  color: #172033;
+  background: #fff;
+  font-size: 14px;
+  text-transform: none;
+}
+
+.student-detail-table tbody tr:nth-child(odd) {
+  background: #f8fafc;
+}
+
+.student-detail-table .selected-row {
+  background: #e9f1fb;
+}
+
 .data-table td span {
   display: block;
   margin-top: 3px;
   color: #6c7d91;
   font-size: 12px;
+}
+
+.table-action-link {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding: 0 9px;
+  color: #fff;
+  background: #1d5fc2;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.table-action-link:hover {
+  background: #164f9f;
+}
+
+.table-footer p {
+  margin: 0;
+  color: #172033;
+  font-size: 14px;
+}
+
+.table-pagination {
+  display: inline-flex;
+  align-items: center;
+}
+
+.table-pagination button {
+  min-height: 38px;
+  border: 1px solid #dce5ef;
+  border-left: 0;
+  padding: 0 12px;
+  color: #5c6c7f;
+  background: #fff;
+}
+
+.table-pagination button:first-child {
+  border-left: 1px solid #dce5ef;
+  border-radius: 4px 0 0 4px;
+}
+
+.table-pagination button:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.table-pagination button.active {
+  color: #fff;
+  background: #1d5fc2;
+  border-color: #1d5fc2;
 }
 
 .status-pill {
@@ -1070,5 +1182,20 @@ select {
 
   .dashboard-header h1 {
     font-size: 32px;
+  }
+
+  .table-controls,
+  .table-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .table-search {
+    width: 100%;
+  }
+
+  .table-search input {
+    flex: 1;
+    width: auto;
   }
 }

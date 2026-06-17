@@ -7,6 +7,10 @@ export function normalizeCollectionResponse(data) {
     return data;
   }
 
+  if (Array.isArray(data?.data?.results)) {
+    return data.data.results;
+  }
+
   if (Array.isArray(data?.results)) {
     return data.results;
   }
@@ -19,7 +23,15 @@ export function normalizeCollectionResponse(data) {
 }
 
 export function getGuardianId(user) {
-  return firstDefined(user?.guardian_id, user?.guardian?.id, user?.profile?.guardian_id, user?.guardianProfile?.id, user?.id);
+  return firstDefined(
+    user?.guardian_id,
+    user?.guardian?.id,
+    user?.profile?.guardian_id,
+    user?.guardianProfile?.id,
+    user?.parent_id,
+    user?.parent?.id,
+    user?.id,
+  );
 }
 
 export function getStudentId(user, fallbackId = null) {

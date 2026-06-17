@@ -13,7 +13,7 @@ const features = [
 function Login() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
   });
   const [language, setLanguage] = useState("english");
@@ -106,9 +106,9 @@ function Login() {
               Username
               <input
                 type="text"
-                name="email"
+                name="username"
                 placeholder="Enter your username"
-                value={formData.email}
+                value={formData.username}
                 onChange={handleChange}
                 autoComplete="username"
                 required

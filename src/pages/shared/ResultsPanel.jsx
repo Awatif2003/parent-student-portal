@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { downloadReportCard, getExamReportCards, getStudentProfile, getTermResults } from "../../services/portalDataService";
-import { getCurrentUser } from "../../utils/authStorage";
+import { getCurrentUser, getUserRole, isParentRole } from "../../utils/authStorage";
 import {
   getDisplayName,
   getPreferredTermId,
@@ -16,7 +16,15 @@ function ResultsPanel({ variant = "term-results" }) {
   const [studentState, setStudentState] = useState({ isLoading: true, error: "", student: null });
   const [collectionState, setCollectionState] = useState({ isLoading: true, error: "", items: [] });
 
-  const selectedStudentId = useMemo(() => searchParams.get("studentId") || getStudentId(user), [searchParams, user]);
+  const selectedStudentId = useMemo(() => {
+    const queryStudentId = searchParams.get("studentId");
+
+    if (queryStudentId) {
+      return queryStudentId;
+    }
+
+    return isParentRole(getUserRole(user)) ? null : getStudentId(user);
+  }, [searchParams, user]);
   const enrollmentId = useMemo(() => getStudentEnrollmentId(studentState.student), [studentState.student]);
   const termId = useMemo(() => getPreferredTermId(studentState.student), [studentState.student]);
 
@@ -62,6 +70,14 @@ function ResultsPanel({ variant = "term-results" }) {
       loadCollection();
     }
   }, [loadCollection, variant]);
+
+  const visibleCollectionItems = useMemo(() => {
+    if (!selectedStudentId) {
+      return collectionState.items;
+    }
+
+    return collectionState.items.filter((item) => recordBelongsToStudent(item, selectedStudentId, studentState.student));
+  }, [collectionState.items, selectedStudentId, studentState.student]);
 
   const handleDownloadReportCard = async () => {
     if (!enrollmentId || !termId) {
@@ -128,11 +144,11 @@ function ResultsPanel({ variant = "term-results" }) {
 
       {collectionState.isLoading ? <p className="panel-note">Loading results...</p> : null}
       {!collectionState.isLoading && collectionState.error ? <p className="panel-note panel-note-error">{collectionState.error}</p> : null}
-      {!collectionState.isLoading && !collectionState.error && !collectionState.items.length ? (
+      {!collectionState.isLoading && !collectionState.error && !visibleCollectionItems.length ? (
         <p className="panel-note">No result records were returned by the API.</p>
       ) : null}
 
-      {!collectionState.isLoading && collectionState.items.length ? (
+      {!collectionState.isLoading && visibleCollectionItems.length ? (
         <div className="table-wrap">
           <table className="data-table">
             <thead>
@@ -146,7 +162,7 @@ function ResultsPanel({ variant = "term-results" }) {
               </tr>
             </thead>
             <tbody>
-              {collectionState.items.slice(0, 8).map((item) => (
+              {visibleCollectionItems.slice(0, 8).map((item) => (
                 <tr key={getRecordId(item) || getDisplayName(item)}>
                   <td>
                     <strong>{getDisplayName(item)}</strong>
@@ -165,6 +181,27 @@ function ResultsPanel({ variant = "term-results" }) {
       ) : null}
     </section>
   );
+}
+
+function recordBelongsToStudent(record, selectedStudentId, selectedStudent) {
+  const possibleIds = [
+    record?.student_id,
+    record?.student?.id,
+    record?.student,
+    record?.enrollment?.student_id,
+    record?.enrollment?.student?.id,
+    getRecordId(selectedStudent),
+  ]
+    .filter(Boolean)
+    .map(String);
+
+  if (possibleIds.includes(String(selectedStudentId))) {
+    return true;
+  }
+
+  const selectedName = getDisplayName(selectedStudent);
+
+  return Boolean(selectedName && selectedName !== "Unknown" && getDisplayName(record) === selectedName);
 }
 
 export default ResultsPanel;

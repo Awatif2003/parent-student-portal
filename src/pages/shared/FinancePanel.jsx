@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { getBalanceStatement, getInvoices, getPayments } from "../../services/portalDataService";
+import { getBalanceStatement, getInvoices, getPayments, getStudentProfile } from "../../services/portalDataService";
 import { getDisplayName, getRecordId } from "../../utils/portalIdentity";
 
 function FinancePanel({ variant = "invoices" }) {
   const [searchParams] = useSearchParams();
+  const selectedStudentId = searchParams.get("studentId");
   const [collectionState, setCollectionState] = useState({ isLoading: true, error: "", items: [] });
   const [statementState, setStatementState] = useState({ isLoading: false, error: "", statement: null });
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   const loadCollection = useCallback(() => {
     setCollectionState({ isLoading: true, error: "", items: [] });
@@ -44,6 +46,25 @@ function FinancePanel({ variant = "invoices" }) {
     loadCollection();
   }, [loadCollection]);
 
+  useEffect(() => {
+    if (!selectedStudentId) {
+      setSelectedStudent(null);
+      return;
+    }
+
+    getStudentProfile(selectedStudentId)
+      .then((student) => setSelectedStudent(student))
+      .catch(() => setSelectedStudent(null));
+  }, [selectedStudentId]);
+
+  const visibleCollectionItems = useMemo(() => {
+    if (!selectedStudentId) {
+      return collectionState.items;
+    }
+
+    return collectionState.items.filter((item) => recordBelongsToStudent(item, selectedStudentId, selectedStudent));
+  }, [collectionState.items, selectedStudentId, selectedStudent]);
+
   const firstBalanceId = useMemo(() => {
     const selectedBalanceId = searchParams.get("balanceId");
 
@@ -51,9 +72,9 @@ function FinancePanel({ variant = "invoices" }) {
       return selectedBalanceId;
     }
 
-    const firstItem = collectionState.items[0];
+    const firstItem = visibleCollectionItems[0];
     return firstItem?.balance_id || firstItem?.balance?.id || firstItem?.id || null;
-  }, [collectionState.items, searchParams]);
+  }, [visibleCollectionItems, searchParams]);
 
   useEffect(() => {
     if (variant === "invoices") {
@@ -66,7 +87,13 @@ function FinancePanel({ variant = "invoices" }) {
       <div className="panel-header">
         <div>
           <h3>{variant === "payments" ? "Payments" : "Invoices"}</h3>
-          <p>{variant === "payments" ? "Payment history from the finance API." : "Invoices and balance statement information from the finance API."}</p>
+          <p>
+            {selectedStudentId
+              ? `Selected student's ${variant === "payments" ? "payment history" : "invoice information"} from the API.`
+              : variant === "payments"
+                ? "Payment history from the finance API."
+                : "Invoices and balance statement information from the finance API."}
+          </p>
         </div>
         <button className="panel-action" type="button" onClick={loadCollection} disabled={collectionState.isLoading}>
           {collectionState.isLoading ? "Loading..." : "Refresh"}
@@ -75,11 +102,11 @@ function FinancePanel({ variant = "invoices" }) {
 
       {collectionState.isLoading ? <p className="panel-note">Loading finance records...</p> : null}
       {!collectionState.isLoading && collectionState.error ? <p className="panel-note panel-note-error">{collectionState.error}</p> : null}
-      {!collectionState.isLoading && !collectionState.error && !collectionState.items.length ? (
+      {!collectionState.isLoading && !collectionState.error && !visibleCollectionItems.length ? (
         <p className="panel-note">No finance records were returned by the API.</p>
       ) : null}
 
-      {!collectionState.isLoading && collectionState.items.length ? (
+      {!collectionState.isLoading && visibleCollectionItems.length ? (
         <div className="table-wrap">
           <table className="data-table">
             <thead>
@@ -92,7 +119,7 @@ function FinancePanel({ variant = "invoices" }) {
               </tr>
             </thead>
             <tbody>
-              {collectionState.items.slice(0, 8).map((item) => (
+              {visibleCollectionItems.slice(0, 8).map((item) => (
                 <tr key={getRecordId(item) || getDisplayName(item)}>
                   <td>
                     <strong>{getDisplayName(item)}</strong>
@@ -149,6 +176,28 @@ function FinancePanel({ variant = "invoices" }) {
       ) : null}
     </section>
   );
+}
+
+function recordBelongsToStudent(record, selectedStudentId, selectedStudent) {
+  const possibleIds = [
+    record?.student_id,
+    record?.student?.id,
+    record?.student,
+    record?.balance?.student_id,
+    record?.invoice?.student_id,
+    getRecordId(selectedStudent),
+  ]
+    .filter(Boolean)
+    .map(String);
+
+  if (possibleIds.includes(String(selectedStudentId))) {
+    return true;
+  }
+
+  const selectedName = getDisplayName(selectedStudent);
+  const recordNames = [getDisplayName(record), record?.student_name, record?.balance_name].filter(Boolean);
+
+  return Boolean(selectedName && selectedName !== "Unknown" && recordNames.includes(selectedName));
 }
 
 export default FinancePanel;

@@ -1,39 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../components/DashboardLayout";
-import { getGuardianChildren, getStudentProfile } from "../../services/portalDataService";
-import { getCurrentUser } from "../../utils/authStorage";
-import { getDisplayName, getGuardianId, getRecordId } from "../../utils/portalIdentity";
+import { getStudentProfile } from "../../services/portalDataService";
+import { getDisplayName } from "../../utils/portalIdentity";
+import ParentStudentTable from "./ParentStudentTable";
+import { parentNavItems } from "./parentNavItems";
 
 function MyChildren() {
   const [searchParams] = useSearchParams();
-  const user = getCurrentUser();
-  const guardianId = useMemo(() => getGuardianId(user), [user]);
   const selectedStudentId = searchParams.get("studentId");
-
-  const [childrenState, setChildrenState] = useState({ isLoading: true, error: "", children: [] });
   const [selectedStudentState, setSelectedStudentState] = useState({ isLoading: false, error: "", student: null });
-
-  const loadChildren = useCallback(() => {
-    if (!guardianId) {
-      setChildrenState({ isLoading: false, error: "Unable to determine guardian profile from the current session.", children: [] });
-      return Promise.resolve();
-    }
-
-    setChildrenState((currentState) => ({ ...currentState, isLoading: true, error: "" }));
-
-    return getGuardianChildren(guardianId)
-      .then((data) => {
-        setChildrenState({
-          isLoading: false,
-          error: "",
-          children: Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [],
-        });
-      })
-      .catch((fetchError) => {
-        setChildrenState({ isLoading: false, error: fetchError.message || "Unable to load children.", children: [] });
-      });
-  }, [guardianId]);
 
   const loadSelectedStudent = useCallback(
     (studentId) => {
@@ -56,64 +32,16 @@ function MyChildren() {
   );
 
   useEffect(() => {
-    loadChildren();
-  }, [loadChildren]);
-
-  useEffect(() => {
     loadSelectedStudent(selectedStudentId);
   }, [loadSelectedStudent, selectedStudentId]);
 
   return (
     <DashboardLayout
       title="My Children"
-      subtitle="View linked children, basic profile details, and open a child's profile for more information."
-      navItems={[
-        { label: "Parent Dashboard", href: "/parent" },
-        { label: "My Children", href: "/parent/children" },
-        { label: "Attendance", href: "/parent/attendance" },
-      ]}
+      subtitle="View linked students, class placement, school details, and open each child's profile."
+      navItems={parentNavItems}
     >
-      <section className="data-panel">
-        <div className="panel-header">
-          <div>
-            <h3>Linked Students</h3>
-            <p>Children associated with the current guardian account.</p>
-          </div>
-          <button className="panel-action" type="button" onClick={loadChildren} disabled={childrenState.isLoading}>
-            {childrenState.isLoading ? "Loading..." : "Refresh"}
-          </button>
-        </div>
-
-        {childrenState.isLoading ? <p className="panel-note">Loading children...</p> : null}
-        {!childrenState.isLoading && childrenState.error ? <p className="panel-note panel-note-error">{childrenState.error}</p> : null}
-        {!childrenState.isLoading && !childrenState.error && !childrenState.children.length ? (
-          <p className="panel-note">No children were returned for this guardian account.</p>
-        ) : null}
-
-        {!childrenState.isLoading && !childrenState.error && childrenState.children.length ? (
-          <div className="record-grid">
-            {childrenState.children.map((child) => (
-              <article className={`record-card ${String(getRecordId(child)) === selectedStudentId ? "record-card-active" : ""}`} key={getRecordId(child) || getDisplayName(child)}>
-                <div>
-                  <p className="record-label">Student</p>
-                  <h4>{getDisplayName(child)}</h4>
-                  <p>{child.admission_number || child.admission_no || "Admission number unavailable"}</p>
-                </div>
-                <div className="record-meta">
-                  <span>{child.class_name || child.class || child.stream_name || "Class unavailable"}</span>
-                  <span>{child.gender || child.status || "Profile available"}</span>
-                </div>
-                <Link className="record-link" to={`/parent/children?studentId=${getRecordId(child)}`}>
-                  View full profile
-                </Link>
-                <Link className="record-link" to={`/parent/results/student-result-card?studentId=${getRecordId(child)}`}>
-                  View report card
-                </Link>
-              </article>
-            ))}
-          </div>
-        ) : null}
-      </section>
+      <ParentStudentTable description="Children associated with the current guardian account." actionPath="/parent/children" />
 
       {selectedStudentId ? (
         <section className="data-panel data-panel-spaced">

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import Logo from "./brand/Logo";
 import { clearAuthSession, getCurrentUser, getUserRole } from "../utils/authStorage";
@@ -15,6 +16,19 @@ function DashboardLayout({ title, subtitle, sections = [], accent = "blue", navI
     }));
   const navLinkClassName = ({ isActive }) => (isActive ? "sidebar-nav-link active" : "sidebar-nav-link");
   const subnavLinkClassName = ({ isActive }) => (isActive ? "sidebar-subnav-link active" : "sidebar-subnav-link");
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      clearAuthSession();
+      navigate("/", { replace: true });
+    };
+
+    window.addEventListener("auth:session-expired", handleSessionExpired);
+
+    return () => {
+      window.removeEventListener("auth:session-expired", handleSessionExpired);
+    };
+  }, [navigate]);
 
   const handleSignOut = () => {
     clearAuthSession();
