@@ -6,12 +6,12 @@ import { parentNavItems } from "../parentNavItems";
 function TermResults() {
   return (
     <DashboardLayout
-      title="Term Results"
-      subtitle="View published term exam results, grades, and teacher comments."
+      title="Annual Results"
+      subtitle="View published annual results, divisions, rankings, promotion status, and teacher comments."
       navItems={parentNavItems}
     >
-      <ParentStudentTable title="Students Term Results" description="Select a student to view term result records." actionPath="/parent/results/term-results" />
-      <ResultsPanel variant="term-results" />
+      <ParentStudentTable title="Students Annual Results" description="Select a student to view annual result records." actionPath="/parent/results/term-results" />
+      <ResultsPanel variant="annual-results" />
     </DashboardLayout>
   );
 }

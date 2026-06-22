@@ -6,7 +6,7 @@ export const parentNavItems = [
     label: "Results",
     children: [
       { label: "Continuous Assessment", href: "/parent/results/continuous-assessments" },
-      { label: "Term Results", href: "/parent/results/term-results" },
+      { label: "Annual Results", href: "/parent/results/term-results" },
       { label: "Student Result Card", href: "/parent/results/student-result-card" },
     ],
   },

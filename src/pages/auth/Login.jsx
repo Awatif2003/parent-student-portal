@@ -60,19 +60,6 @@ function Login() {
           <Logo variant="login" />
         </div>
 
-        <div className="education-illustration" aria-hidden="true">
-          <div className="illustration-card illustration-card-parent">
-            <span>P</span>
-          </div>
-          <div className="illustration-card illustration-card-student">
-            <span>S</span>
-          </div>
-          <div className="illustration-card illustration-card-school">
-            <span>School</span>
-          </div>
-          <div className="illustration-book" />
-        </div>
-
         <div className="login-hero-copy">
           <h1>Parent Student Portal</h1>
           <p>

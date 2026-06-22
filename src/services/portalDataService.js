@@ -24,6 +24,8 @@ export const getExamReportCards = () => apiRequest(PARENT_STUDENT_ENDPOINTS.exam
 
 export const getTermResults = () => apiRequest(PARENT_STUDENT_ENDPOINTS.exams.termResults);
 
+export const getAnnualResults = () => apiRequest(PARENT_STUDENT_ENDPOINTS.exams.annualResults);
+
 export const getBalanceStatement = (balanceId) => apiRequest(PARENT_STUDENT_ENDPOINTS.finance.balanceStatement(balanceId));
 
 export const getInvoices = () => apiRequest(PARENT_STUDENT_ENDPOINTS.finance.invoices);

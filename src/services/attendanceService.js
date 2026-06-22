@@ -8,6 +8,8 @@ export const ATTENDANCE_ENDPOINTS = {
 export const getStudentAttendanceRecords = (params = {}) =>
   apiRequest(withQueryParams(ATTENDANCE_ENDPOINTS.myChildren, params));
 
+export const getMyChildrenAttendance = getStudentAttendanceRecords;
+
 export const createStudentAttendanceRecord = (attendanceData) =>
   apiRequest(ATTENDANCE_ENDPOINTS.students, {
     method: "POST",

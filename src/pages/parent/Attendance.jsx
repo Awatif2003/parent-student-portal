@@ -267,7 +267,44 @@ function normalizeChildrenAttendance(data) {
     return data.data.children;
   }
 
-  return [];
+  const records = normalizeFlatAttendanceRecords(data);
+  const groupedChildren = new Map();
+
+  records.forEach((record) => {
+    const childId = record.student_id || record.enrollment || record.admission_number || record.student_name;
+    const child = groupedChildren.get(childId) || {
+      student_id: record.student_id || record.enrollment,
+      student_name: record.student_name,
+      admission_number: record.admission_number,
+      current_class: record.class_name,
+      attendance: [],
+    };
+
+    child.attendance.push(record);
+    groupedChildren.set(childId, child);
+  });
+
+  return Array.from(groupedChildren.values());
+}
+
+function normalizeFlatAttendanceRecords(data) {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data?.results)) {
+    return data.results;
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data;
+  }
+
+  if (Array.isArray(data?.data?.results)) {
+    return data.data.results;
+  }
+
+  return data?.id ? [data] : [];
 }
 
 function flattenChildrenAttendance(children) {

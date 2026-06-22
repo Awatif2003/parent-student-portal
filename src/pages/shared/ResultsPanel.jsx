@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { downloadReportCard, getExamReportCards, getStudentProfile, getTermResults } from "../../services/portalDataService";
+import { downloadReportCard, getAnnualResults, getExamReportCards, getStudentProfile, getTermResults } from "../../services/portalDataService";
 import { getCurrentUser, getUserRole, isParentRole } from "../../utils/authStorage";
 import {
   getDisplayName,
@@ -48,11 +48,11 @@ function ResultsPanel({ variant = "term-results" }) {
   const loadCollection = useCallback(() => {
     setCollectionState({ isLoading: true, error: "", items: [] });
 
-    const loader = variant === "term-results" ? getTermResults() : getExamReportCards();
+    const loader = getResultsLoader(variant);
 
-    return loader
+    return loader()
       .then((data) => {
-        const items = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+        const items = normalizeResultCollection(data);
 
         setCollectionState({ isLoading: false, error: "", items });
       })
@@ -62,13 +62,11 @@ function ResultsPanel({ variant = "term-results" }) {
   }, [variant]);
 
   useEffect(() => {
-    loadStudent();
+    void Promise.resolve().then(loadStudent);
   }, [loadStudent]);
 
   useEffect(() => {
-    if (variant !== "report-card") {
-      loadCollection();
-    }
+    void Promise.resolve().then(loadCollection);
   }, [loadCollection, variant]);
 
   const visibleCollectionItems = useMemo(() => {
@@ -126,6 +124,25 @@ function ResultsPanel({ variant = "term-results" }) {
           </button>
           {!enrollmentId || !termId ? <p className="panel-note">A report card requires both enrollment and term identifiers.</p> : null}
         </div>
+
+        <div className="data-panel data-panel-spaced">
+          <div className="panel-header">
+            <div>
+              <h3>Published Result Cards</h3>
+              <p>Report card data returned by the API, including subject grades and term summary.</p>
+            </div>
+            <button className="panel-action" type="button" onClick={loadCollection} disabled={collectionState.isLoading}>
+              {collectionState.isLoading ? "Loading..." : "Refresh"}
+            </button>
+          </div>
+
+          {collectionState.isLoading ? <p className="panel-note">Loading result cards...</p> : null}
+          {!collectionState.isLoading && collectionState.error ? <p className="panel-note panel-note-error">{collectionState.error}</p> : null}
+          {!collectionState.isLoading && !collectionState.error && !visibleCollectionItems.length ? (
+            <p className="panel-note">No result cards were returned by the API.</p>
+          ) : null}
+          {!collectionState.isLoading && visibleCollectionItems.length ? <ReportCardsView cards={visibleCollectionItems} /> : null}
+        </div>
       </section>
     );
   }
@@ -134,8 +151,8 @@ function ResultsPanel({ variant = "term-results" }) {
     <section className="data-panel data-panel-spaced">
       <div className="panel-header">
         <div>
-          <h3>{variant === "term-results" ? "Term Results" : "Report Cards"}</h3>
-          <p>{variant === "term-results" ? "Published term result records from the API." : "Available exam report cards from the API."}</p>
+          <h3>{getResultsTitle(variant)}</h3>
+          <p>{getResultsDescription(variant)}</p>
         </div>
         <button className="panel-action" type="button" onClick={loadCollection} disabled={collectionState.isLoading}>
           {collectionState.isLoading ? "Loading..." : "Refresh"}
@@ -148,7 +165,11 @@ function ResultsPanel({ variant = "term-results" }) {
         <p className="panel-note">No result records were returned by the API.</p>
       ) : null}
 
-      {!collectionState.isLoading && visibleCollectionItems.length ? (
+      {!collectionState.isLoading && visibleCollectionItems.length && variant === "annual-results" ? (
+        <AnnualResultsView results={visibleCollectionItems} />
+      ) : null}
+
+      {!collectionState.isLoading && visibleCollectionItems.length && variant !== "annual-results" ? (
         <div className="table-wrap">
           <table className="data-table">
             <thead>
@@ -183,14 +204,263 @@ function ResultsPanel({ variant = "term-results" }) {
   );
 }
 
+function ReportCardsView({ cards }) {
+  return (
+    <div className="record-grid">
+      {cards.slice(0, 6).map((card) => {
+        const termResult = card.term_result || {};
+        const subjectGrades = card.subject_grades || termResult.subject_grades || [];
+
+        return (
+          <article className="record-card result-card" key={termResult.id || card.id || `${getReportStudentName(card)}-${getReportTermName(card)}`}>
+            <div>
+              <p className="record-label">{getReportTermName(card)}</p>
+              <h4>{getReportStudentName(card)}</h4>
+              <p>{termResult.student_admission || card.student?.admission_number || "Admission number unavailable"}</p>
+            </div>
+
+            <div className="metric-grid">
+              <div className="metric-card">
+                <strong>{formatDecimal(termResult.average_marks)}</strong>
+                <span>Average marks</span>
+              </div>
+              <div className="metric-card">
+                <strong>{termResult.division || "-"}</strong>
+                <span>Division</span>
+              </div>
+              <div className="metric-card">
+                <strong>{formatRank(termResult.stream_rank)}</strong>
+                <span>Stream rank</span>
+              </div>
+              <div className="metric-card">
+                <strong>{formatNumber(termResult.subjects_passed)}</strong>
+                <span>Subjects passed</span>
+              </div>
+            </div>
+
+            {subjectGrades.length ? (
+              <div className="table-wrap">
+                <table className="data-table result-subject-table">
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>Marks</th>
+                      <th>Grade</th>
+                      <th>Points</th>
+                      <th>Rank</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subjectGrades.map((grade) => (
+                      <tr key={grade.id || `${grade.subject_name}-${grade.subject_rank}`}>
+                        <td>{grade.subject_name || grade.subject || "-"}</td>
+                        <td>{formatDecimal(grade.average_marks || grade.total_marks)}</td>
+                        <td>{grade.grade || "-"}</td>
+                        <td>{formatDecimal(grade.points)}</td>
+                        <td>{formatRank(grade.subject_rank)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+
+            <div className="record-meta">
+              <span>{termResult.class_teacher_comment || termResult.remarks || "No class teacher comment."}</span>
+              <span>{termResult.head_teacher_comment || "No head teacher comment."}</span>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function AnnualResultsView({ results }) {
+  const [pageSize, setPageSize] = useState(25);
+  const visibleResults = results.slice(0, pageSize);
+
+  return (
+    <div className="table-panel">
+      <div className="table-controls">
+        <label className="table-length">
+          <span>Show</span>
+          <select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))}>
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <span>entries</span>
+        </label>
+      </div>
+
+      <div className="table-wrap">
+        <table className="data-table student-detail-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Academic Year</th>
+              <th>Stream</th>
+              <th>Subjects</th>
+              <th>Average</th>
+              <th>Points</th>
+              <th>Division</th>
+              <th>Stream Rank</th>
+              <th>Grade Rank</th>
+              <th>Promotion</th>
+              <th>Promoted To</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleResults.map((result) => (
+              <tr key={result.id || result.enrollment || `${result.student_name}-${result.academic_year}`}>
+                <td>
+                  <strong>{result.student_name || "-"}</strong>
+                  <span>{result.student_admission || result.admission_number || "-"}</span>
+                </td>
+                <td>{result.academic_year_name || result.academic_year || "-"}</td>
+                <td>{result.stream_name || "-"}</td>
+                <td>{formatNumber(result.total_subjects)}</td>
+                <td>{formatDecimal(result.annual_average)}</td>
+                <td>{formatDecimal(result.annual_points)}</td>
+                <td>{result.final_division || "-"}</td>
+                <td>{formatRank(result.stream_rank)}</td>
+                <td>{formatRank(result.grade_rank)}</td>
+                <td>
+                  <span className={`status-pill status-${String(result.promotion_status || "unknown").toLowerCase()}`}>
+                    {formatLabel(result.promotion_status)}
+                  </span>
+                </td>
+                <td>{result.promoted_to_name || "-"}</td>
+                <td>{result.remarks || result.head_teacher_comment || "-"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="table-footer">
+        <p>
+          Showing {visibleResults.length ? 1 : 0} to {visibleResults.length} of {results.length} entries
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function getResultsLoader(variant) {
+  if (variant === "annual-results") {
+    return getAnnualResults;
+  }
+
+  return variant === "term-results" ? getTermResults : getExamReportCards;
+}
+
+function getResultsTitle(variant) {
+  if (variant === "annual-results") {
+    return "Annual Results";
+  }
+
+  return variant === "term-results" ? "Term Results" : "Report Cards";
+}
+
+function getResultsDescription(variant) {
+  if (variant === "annual-results") {
+    return "Published annual result records from the API.";
+  }
+
+  return variant === "term-results" ? "Published term result records from the API." : "Available exam report cards from the API.";
+}
+
+function normalizeResultCollection(data) {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data?.results)) {
+    return data.results;
+  }
+
+  if (Array.isArray(data?.data?.results)) {
+    return data.data.results;
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data;
+  }
+
+  return data?.id ? [data] : [];
+}
+
+function formatDecimal(value) {
+  if (value === undefined || value === null || value === "") {
+    return "-";
+  }
+
+  const numberValue = Number(value);
+
+  if (Number.isNaN(numberValue)) {
+    return value;
+  }
+
+  return numberValue.toFixed(2).replace(/\.00$/, "");
+}
+
+function formatNumber(value) {
+  if (value === undefined || value === null || value === "") {
+    return "-";
+  }
+
+  return Number.isNaN(Number(value)) ? value : Number(value).toLocaleString();
+}
+
+function formatRank(value) {
+  return value ? `#${value}` : "-";
+}
+
+function formatLabel(value) {
+  if (!value) {
+    return "-";
+  }
+
+  return String(value)
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function getReportStudentName(card) {
+  return firstAvailable(
+    card?.term_result?.student_name,
+    card?.student?.full_name,
+    card?.student?.name,
+    card?.student?.student_name,
+    getDisplayName(card),
+  );
+}
+
+function getReportTermName(card) {
+  return firstAvailable(card?.term_result?.term_name, card?.term?.name, card?.term?.term_name, card?.term_name, "Term");
+}
+
+function firstAvailable(...values) {
+  return values.find((value) => value !== undefined && value !== null && value !== "") || "-";
+}
+
 function recordBelongsToStudent(record, selectedStudentId, selectedStudent) {
   const possibleIds = [
     record?.student_id,
     record?.student?.id,
     record?.student,
+    record?.term_result?.student_id,
     record?.enrollment?.student_id,
     record?.enrollment?.student?.id,
     getRecordId(selectedStudent),
+    getStudentEnrollmentId(selectedStudent) && record?.term_result?.enrollment,
+    getStudentEnrollmentId(selectedStudent) && record?.enrollment,
   ]
     .filter(Boolean)
     .map(String);
