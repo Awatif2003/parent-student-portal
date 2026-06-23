@@ -29,7 +29,10 @@ export const PARENT_STUDENT_ENDPOINTS = {
   },
   attendance: {
     students: "/attendance/students/",
-    myChildren: "/attendance/students/my-children/",
+    // Parent self-service: cross-school list of linked children, each with a
+    // nested attendance array. Supports student_id/date/start_date/end_date
+    // query params. Serves both the children list and the attendance views.
+    parentChildren: "/attendance/parent/children/",
     studentDetail: (id) => `/attendance/students/${id}/`,
     bulk: "/attendance/students/bulk/",
     byDate: (date) => `/attendance/students/by-date/${date}/`,

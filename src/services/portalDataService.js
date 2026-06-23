@@ -1,8 +1,22 @@
 import { apiDownload, apiRequest } from "./api";
 import { PARENT_STUDENT_ENDPOINTS } from "./parentStudentEndpoints";
+import { getParentChildren } from "./attendanceService";
 
-export const getGuardianChildren = (guardianId) =>
-  apiRequest(PARENT_STUDENT_ENDPOINTS.students.guardianStudents(guardianId));
+// The linked children list comes from the parent self-service endpoint, which
+// is scoped to the authenticated guardian (cross-school) — no guardianId or
+// admin permission required. Map each child to the shape the tables expect.
+export const getGuardianChildren = () =>
+  getParentChildren().then((children) =>
+    children.map((child) => ({
+      id: child.student_id,
+      student_id: child.student_id,
+      full_name: child.student_name,
+      admission_number: child.admission_number,
+      school_name: child.school?.name,
+      class_name: child.current_class,
+      academic_year: child.academic_year,
+    })),
+  );
 
 export const getStudentProfile = (studentId) => apiRequest(PARENT_STUDENT_ENDPOINTS.students.detail(studentId));
 

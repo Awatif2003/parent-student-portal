@@ -5,8 +5,28 @@ export const ATTENDANCE_ENDPOINTS = {
   ...PARENT_STUDENT_ENDPOINTS.attendance,
 };
 
+// Fetch the parent's linked children (cross-school) with their nested
+// attendance. Returns the raw `children` array from the API.
+export const getParentChildren = (params = {}) =>
+  apiRequest(withQueryParams(ATTENDANCE_ENDPOINTS.parentChildren, params)).then((data) =>
+    Array.isArray(data?.children) ? data.children : [],
+  );
+
+// Flatten each child's nested attendance into table-ready rows enriched with
+// the child's identity. AttendanceRecordsTable expects flat records.
 export const getStudentAttendanceRecords = (params = {}) =>
-  apiRequest(withQueryParams(ATTENDANCE_ENDPOINTS.myChildren, params));
+  getParentChildren(params).then((children) =>
+    children.flatMap((child) =>
+      (child.attendance || []).map((record) => ({
+        ...record,
+        student_id: child.student_id,
+        student_name: child.student_name,
+        admission_number: child.admission_number,
+        class_name: child.current_class,
+        school: child.school,
+      })),
+    ),
+  );
 
 export const getMyChildrenAttendance = getStudentAttendanceRecords;
 

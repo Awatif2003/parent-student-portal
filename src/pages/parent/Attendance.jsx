@@ -277,6 +277,7 @@ function normalizeChildrenAttendance(data) {
       student_name: record.student_name,
       admission_number: record.admission_number,
       current_class: record.class_name,
+      school: record.school,
       attendance: [],
     };
 
