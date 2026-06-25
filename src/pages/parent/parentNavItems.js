@@ -1,5 +1,4 @@
 export const parentNavItems = [
-  { label: "Parent Dashboard", href: "/parent" },
   { label: "My Children", href: "/parent/children" },
   { label: "Attendance", href: "/parent/attendance" },
   {
@@ -11,10 +10,11 @@ export const parentNavItems = [
     ],
   },
   {
-    label: "Finance Information",
+    label: "Finance",
     children: [
       { label: "Invoice", href: "/parent/finance/invoice" },
       { label: "Receipts", href: "/parent/finance/receipts" },
     ],
   },
+  { label: "Notifications", href: "/parent/notifications" },
 ];

@@ -5,47 +5,7 @@ import { getDashboardExams, getDashboardFinance } from "../../services/dashboard
 import { getGuardianChildren } from "../../services/portalDataService";
 import { getCurrentUser } from "../../utils/authStorage";
 import { getDisplayName, getRecordId } from "../../utils/portalIdentity";
-
-const parentNavItems = [
-  {
-    label: "My Children",
-    href: "/parent/children",
-  },
-  {
-    label: "Attendance",
-    href: "/parent/attendance",
-  },
-  {
-    label: "Results",
-    children: [
-      {
-        label: "Continuous Assessment",
-        href: "/parent/results/continuous-assessments",
-      },
-      {
-        label: "Annual Results",
-        href: "/parent/results/term-results",
-      },
-      {
-        label: "Student Result Card",
-        href: "/parent/results/student-result-card",
-      },
-    ],
-  },
-  {
-    label: "Finance",
-    children: [
-      {
-        label: "Invoice",
-        href: "/parent/finance/invoice",
-      },
-      {
-        label: "Receipt",
-        href: "/parent/finance/receipts",
-      },
-    ],
-  },
-];
+import { parentNavItems } from "./parentNavItems";
 
 const quickActions = [
   {
@@ -120,7 +80,7 @@ function ParentDashboard() {
   }, []);
 
   useEffect(() => {
-    void Promise.all([loadChildren(), loadFinanceSummary(), loadExamSummary()]);
+    void Promise.resolve().then(() => Promise.all([loadChildren(), loadFinanceSummary(), loadExamSummary()]));
   }, [loadChildren, loadFinanceSummary, loadExamSummary]);
 
   const attendanceSummary = getAttendanceSummary(childrenState.children);
@@ -139,28 +99,10 @@ function ParentDashboard() {
       title="Parent Dashboard"
       subtitle="A simple daily overview for children, attendance, fees, and results."
       navItems={parentNavItems}
-      hideDashboardHeader
       contentClassName="parent-dashboard-content"
       pageClassName="parent-dashboard-page"
     >
       <div className="parent-dashboard-shell">
-        <header className="parent-top-header">
-          <div>
-            <p className="parent-dashboard-kicker">Shule Yangu</p>
-            <h1>Shule Yangu Parent Dashboard</h1>
-          </div>
-
-          <div className="parent-header-meta">
-            <time dateTime={todayQueryDate}>{formatReadableDate(today)}</time>
-            <div className="parent-profile" aria-label="Parent profile">
-              <span className="parent-avatar" aria-hidden="true">
-                {getInitials(parentName)}
-              </span>
-              <span>{parentName}</span>
-            </div>
-          </div>
-        </header>
-
         <section className="parent-welcome-panel">
           <div>
             <p className="parent-dashboard-kicker">Today</p>
@@ -435,26 +377,6 @@ function getParentName(user) {
     user?.email ||
     "Parent"
   );
-}
-
-function getInitials(name) {
-  const initials = String(name || "Parent")
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-
-  return initials || "P";
-}
-
-function formatReadableDate(date) {
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(date);
 }
 
 function formatQueryDate(date) {

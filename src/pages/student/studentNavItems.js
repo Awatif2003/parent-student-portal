@@ -24,4 +24,8 @@ export const studentNavItems = [
       },
     ],
   },
+  {
+    label: "Notifications",
+    href: "/student/notifications",
+  },
 ];

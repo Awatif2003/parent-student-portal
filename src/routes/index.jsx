@@ -15,6 +15,7 @@ import StudentDetails from "../pages/student/StudentDetails";
 import StudentContinuousAssessment from "../pages/student/results/ContinuousAssessment";
 import StudentResults from "../pages/student/results/StudentResults";
 import StudentTermResults from "../pages/student/results/TermResults";
+import Notifications from "../pages/shared/Notifications";
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRoutes() {
@@ -94,6 +95,14 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/parent/notifications"
+        element={
+          <ProtectedRoute allowedRoles={["parent"]}>
+            <Notifications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/student"
         element={
           <ProtectedRoute allowedRoles={["student"]}>
@@ -138,6 +147,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={["student"]}>
             <StudentTermResults />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/notifications"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <Notifications />
           </ProtectedRoute>
         }
       />
