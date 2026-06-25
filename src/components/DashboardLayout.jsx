@@ -3,7 +3,17 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import Logo from "./brand/Logo";
 import { clearAuthSession, getCurrentUser, getUserRole } from "../utils/authStorage";
 
-function DashboardLayout({ title, subtitle, sections = [], accent = "blue", navItems, children }) {
+function DashboardLayout({
+  title,
+  subtitle,
+  sections = [],
+  accent = "blue",
+  navItems,
+  children,
+  hideDashboardHeader = false,
+  contentClassName = "",
+  pageClassName = "",
+}) {
   const navigate = useNavigate();
   const user = getCurrentUser();
   const role = getUserRole(user);
@@ -36,7 +46,7 @@ function DashboardLayout({ title, subtitle, sections = [], accent = "blue", navI
   };
 
   return (
-    <main className="dashboard-page">
+    <main className={`dashboard-page ${pageClassName}`}>
       <aside className="sidebar">
         <Link className="brand" to={homePath}>
           <Logo variant="sidebar" />
@@ -79,20 +89,22 @@ function DashboardLayout({ title, subtitle, sections = [], accent = "blue", navI
         </button>
       </aside>
 
-      <section className="dashboard-content">
+      <section className={`dashboard-content ${contentClassName}`}>
         <div className="dashboard-topbar">
           <Link className="dashboard-topbar-brand" to={homePath}>
             <Logo variant="sidebar" />
           </Link>
         </div>
 
-        <header className={`dashboard-header dashboard-header-${accent}`}>
-          <div>
-            <p className="eyebrow">Dashboard</p>
-            <h1>{title}</h1>
-            <p>{subtitle}</p>
-          </div>
-        </header>
+        {!hideDashboardHeader ? (
+          <header className={`dashboard-header dashboard-header-${accent}`}>
+            <div>
+              <p className="eyebrow">Dashboard</p>
+              <h1>{title}</h1>
+              <p>{subtitle}</p>
+            </div>
+          </header>
+        ) : null}
 
         {children || (
           <div className="dashboard-grid">

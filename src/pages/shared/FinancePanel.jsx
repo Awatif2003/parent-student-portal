@@ -43,18 +43,20 @@ function FinancePanel({ variant = "invoices" }) {
   }, []);
 
   useEffect(() => {
-    loadCollection();
+    void Promise.resolve().then(loadCollection);
   }, [loadCollection]);
 
   useEffect(() => {
-    if (!selectedStudentId) {
-      setSelectedStudent(null);
-      return;
-    }
+    void Promise.resolve().then(() => {
+      if (!selectedStudentId) {
+        setSelectedStudent(null);
+        return;
+      }
 
-    getStudentProfile(selectedStudentId)
-      .then((student) => setSelectedStudent(student))
-      .catch(() => setSelectedStudent(null));
+      getStudentProfile(selectedStudentId)
+        .then((student) => setSelectedStudent(student))
+        .catch(() => setSelectedStudent(null));
+    });
   }, [selectedStudentId]);
 
   const visibleCollectionItems = useMemo(() => {
@@ -77,9 +79,11 @@ function FinancePanel({ variant = "invoices" }) {
   }, [visibleCollectionItems, searchParams]);
 
   useEffect(() => {
-    if (variant === "invoices") {
-      loadStatement(firstBalanceId);
-    }
+    void Promise.resolve().then(() => {
+      if (variant === "invoices") {
+        loadStatement(firstBalanceId);
+      }
+    });
   }, [firstBalanceId, loadStatement, variant]);
 
   return (

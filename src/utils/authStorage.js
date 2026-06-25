@@ -41,7 +41,7 @@ export const clearAuthSession = () => {
   localStorage.removeItem(USER_KEY);
 };
 
-export const isAuthenticated = () => Boolean(getAccessToken() || getCurrentUser());
+export const isAuthenticated = () => Boolean(getAccessToken() || getRefreshToken());
 
 export const getPrimaryRoleAssignment = (user) => {
   if (!Array.isArray(user?.role_assignments)) {
@@ -74,4 +74,16 @@ export const getUserRole = (user) => {
 
 export const isParentRole = (role) => ["parent", "guardian"].includes(String(role || "").toLowerCase());
 
-export const getDashboardPathForRole = (role) => (isParentRole(role) ? "/parent" : "/student");
+export const getDashboardPathForRole = (role) => {
+  const normalizedRole = String(role || "").toLowerCase();
+
+  if (isParentRole(normalizedRole)) {
+    return "/parent";
+  }
+
+  if (normalizedRole === "student") {
+    return "/student";
+  }
+
+  return "/";
+};

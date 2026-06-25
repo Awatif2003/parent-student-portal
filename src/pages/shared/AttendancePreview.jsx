@@ -54,7 +54,7 @@ function AttendancePreview() {
   }, [attendanceData]);
 
   useEffect(() => {
-    loadAttendance();
+    void Promise.resolve().then(loadAttendance);
   }, [loadAttendance]);
 
   return (

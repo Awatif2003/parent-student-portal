@@ -30,7 +30,7 @@ function StudentDetails() {
   }, [fallbackStudentId]);
 
   useEffect(() => {
-    loadStudent();
+    void Promise.resolve().then(loadStudent);
   }, [loadStudent]);
 
   return (

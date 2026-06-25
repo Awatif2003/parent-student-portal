@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { getGuardianChildren } from "../../services/portalDataService";
-import { getCurrentUser } from "../../utils/authStorage";
-import { getDisplayName, getGuardianId, getRecordId, normalizeCollectionResponse } from "../../utils/portalIdentity";
+import { getDisplayName, getRecordId, normalizeCollectionResponse } from "../../utils/portalIdentity";
 
 function ParentStudentTable({
   title = "Students Details",
@@ -11,32 +10,25 @@ function ParentStudentTable({
   actionLabel = "View",
 }) {
   const [searchParams] = useSearchParams();
-  const user = getCurrentUser();
-  const guardianId = useMemo(() => getGuardianId(user), [user]);
   const selectedStudentId = searchParams.get("studentId");
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(25);
   const [state, setState] = useState({ isLoading: true, error: "", children: [] });
 
   const loadChildren = useCallback(() => {
-    if (!guardianId) {
-      setState({ isLoading: false, error: "Unable to determine guardian profile from the current session.", children: [] });
-      return Promise.resolve();
-    }
-
     setState((currentState) => ({ ...currentState, isLoading: true, error: "" }));
 
-    return getGuardianChildren(guardianId)
+    return getGuardianChildren()
       .then((data) => {
         setState({ isLoading: false, error: "", children: normalizeCollectionResponse(data) });
       })
       .catch((fetchError) => {
         setState({ isLoading: false, error: fetchError.message || "Unable to load students.", children: [] });
       });
-  }, [guardianId]);
+  }, []);
 
   useEffect(() => {
-    loadChildren();
+    void Promise.resolve().then(loadChildren);
   }, [loadChildren]);
 
   const filteredChildren = useMemo(() => {

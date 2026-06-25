@@ -5,8 +5,8 @@ import { getParentChildren } from "./attendanceService";
 // The linked children list comes from the parent self-service endpoint, which
 // is scoped to the authenticated guardian (cross-school) — no guardianId or
 // admin permission required. Map each child to the shape the tables expect.
-export const getGuardianChildren = () =>
-  getParentChildren().then((children) =>
+export const getGuardianChildren = (params = {}) =>
+  getParentChildren(params).then((children) =>
     children.map((child) => ({
       id: child.student_id,
       student_id: child.student_id,
@@ -15,6 +15,7 @@ export const getGuardianChildren = () =>
       school_name: child.school?.name,
       class_name: child.current_class,
       academic_year: child.academic_year,
+      attendance: Array.isArray(child.attendance) ? child.attendance : [],
     })),
   );
 
