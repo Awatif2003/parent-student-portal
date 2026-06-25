@@ -852,6 +852,25 @@ select {
   background: #ffecef;
 }
 
+.status-not_taken {
+  color: #6b5300;
+  background: #fff4d6;
+}
+
+.day-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 4px;
+}
+
+.day-status-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #5b6b80;
+}
+
 .dashboard-overview-stack {
   display: grid;
   gap: 22px;

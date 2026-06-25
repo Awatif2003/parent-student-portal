@@ -112,6 +112,7 @@ function Attendance() {
                     <h4>{child.student_name || "-"}</h4>
                     <p>{child.admission_number || "Admission number unavailable"}</p>
                   </div>
+                  <DayStatusBadge dayStatus={child.day_status} />
                   <div className="record-meta">
                     <span>{child.current_class || "Class unavailable"}</span>
                     <span>{formatSchoolName(child.school)}</span>
@@ -365,6 +366,59 @@ function DetailItem({ label, value }) {
       <strong>{value || "-"}</strong>
     </div>
   );
+}
+
+// Surfaces the backend `day_status` block: an explicit taken / not-taken state
+// for the day the parent is viewing (today by default). Without this, an
+// un-marked day just looks like a gap in the history. Renders nothing for an
+// older API response that omits the field.
+function DayStatusBadge({ dayStatus }) {
+  if (!dayStatus || !dayStatus.date) {
+    return null;
+  }
+
+  const isToday = dayStatus.date === todayIso();
+  const dayLabel = isToday ? "Today" : dayStatus.date;
+
+  if (!dayStatus.taken) {
+    return (
+      <div className="day-status">
+        <span className="day-status-label">{dayLabel}</span>
+        <span className="status-pill status-not_taken">
+          {dayStatus.status_display || "Not taken"}
+        </span>
+      </div>
+    );
+  }
+
+  const records = Array.isArray(dayStatus.records) ? dayStatus.records : [];
+
+  return (
+    <div className="day-status">
+      <span className="day-status-label">{dayLabel}</span>
+      {records.length ? (
+        records.map((record, index) => (
+          <span
+            className={`status-pill status-${String(record.status || "unknown").toLowerCase()}`}
+            key={record.id || `${record.session}-${index}`}
+          >
+            {record.status_display || record.status}
+            {record.session ? ` · ${record.session}` : ""}
+          </span>
+        ))
+      ) : (
+        <span className="status-pill status-present">Taken</span>
+      )}
+    </div>
+  );
+}
+
+function todayIso() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export default Attendance;
