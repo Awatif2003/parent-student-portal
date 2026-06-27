@@ -1,9 +1,13 @@
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../../components/DashboardLayout";
-import ResultsPanel from "../../shared/ResultsPanel";
+import ContinuousAssessmentMarks from "../../shared/ContinuousAssessmentMarks";
 import ParentStudentTable from "../ParentStudentTable";
 import { parentNavItems } from "../parentNavItems";
 
 function ContinuousAssessments() {
+  const [searchParams] = useSearchParams();
+  const selectedStudentId = searchParams.get("studentId");
+
   return (
     <DashboardLayout
       title="Continuous Assessment"
@@ -15,7 +19,7 @@ function ContinuousAssessments() {
         description="Select a student to view continuous assessment records."
         actionPath="/parent/results/continuous-assessments"
       />
-      <ResultsPanel variant="exam-cards" />
+      <ContinuousAssessmentMarks studentId={selectedStudentId} />
     </DashboardLayout>
   );
 }

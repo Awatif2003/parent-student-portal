@@ -48,6 +48,8 @@ export const PARENT_STUDENT_ENDPOINTS = {
     termResultsByStream: "/exams/term-results/by-stream/",
     reportCards: "/exams/report-cards/",
     annualResults: "/exams/annual-results/",
+    // Live marks (visible before results are published) for one student.
+    continuousAssessment: "/exams/marks/continuous-assessment/",
   },
   reports: {
     reportCard: (enrollmentId, termId) => `/reports/report-card/${enrollmentId}/${termId}/`,

@@ -1,6 +1,27 @@
 import { apiDownload, apiRequest } from "./api";
 import { PARENT_STUDENT_ENDPOINTS } from "./parentStudentEndpoints";
 import { getParentChildren } from "./attendanceService";
+import { normalizeCollectionResponse } from "../utils/portalIdentity";
+
+// ── Logged-in student (self) ────────────────────────────────────────────────
+// The backend scopes /students/ to the caller's OWN record for a student
+// account, so the list returns exactly one row — the student themselves. This
+// is how the student portal resolves its identity (the JWT carries the User id,
+// not the Student id, so we must not guess it).
+export const getMyStudent = () =>
+  apiRequest(PARENT_STUDENT_ENDPOINTS.students.list).then(
+    (data) => normalizeCollectionResponse(data)[0] || null,
+  );
+
+// Full detail (with current_enrollment) for the logged-in student.
+export const getMyStudentDetail = () =>
+  getMyStudent().then((student) => (student?.id ? getStudentProfile(student.id) : null));
+
+// The logged-in student's OWN attendance records (backend-scoped to self).
+export const getMyAttendance = () =>
+  apiRequest(PARENT_STUDENT_ENDPOINTS.attendance.students).then((data) =>
+    normalizeCollectionResponse(data),
+  );
 
 // The linked children list comes from the parent self-service endpoint, which
 // is scoped to the authenticated guardian (cross-school) — no guardianId or
@@ -36,6 +57,30 @@ export const downloadReportCard = (enrollmentId, termId, filename = "report-card
   apiDownload(PARENT_STUDENT_ENDPOINTS.reports.reportCard(enrollmentId, termId), filename);
 
 export const getExamReportCards = () => apiRequest(PARENT_STUDENT_ENDPOINTS.exams.reportCards);
+
+// Continuous-assessment (live) marks for a specific student. The backend
+// authorizes the caller: a student only ever sees their own (get_queryset
+// scope), a parent only their linked children. Returns a flat array of marks
+// (subject, exam, marks, %, grade). `termId` is optional.
+export const getContinuousAssessmentForStudent = (studentId, termId) => {
+  if (!studentId) {
+    return Promise.resolve([]);
+  }
+
+  const params = new URLSearchParams({ student: studentId });
+  if (termId) {
+    params.append("term", termId);
+  }
+
+  return apiRequest(`${PARENT_STUDENT_ENDPOINTS.exams.continuousAssessment}?${params.toString()}`).then(
+    (data) => normalizeCollectionResponse(data),
+  );
+};
+
+// Convenience for the student portal: resolve the logged-in student's own id
+// from the (self-scoped) /students/ list, then fetch their CA marks.
+export const getMyContinuousAssessment = (termId) =>
+  getMyStudent().then((student) => getContinuousAssessmentForStudent(student?.id, termId));
 
 export const getTermResults = () => apiRequest(PARENT_STUDENT_ENDPOINTS.exams.termResults);
 

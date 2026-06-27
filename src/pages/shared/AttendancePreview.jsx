@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { getAttendanceSummary, getStudentAttendance } from "../../services/portalDataService";
-import { normalizeCollectionResponse } from "../../utils/portalIdentity";
+import { getAttendanceSummary, getMyAttendance } from "../../services/portalDataService";
 
 function AttendancePreview() {
-  const [searchParams] = useSearchParams();
-  const selectedRecordId = searchParams.get("attendanceId") || searchParams.get("studentId");
-  const [attendanceData, setAttendanceData] = useState({});
+  const [summary, setSummary] = useState({});
+  const [records, setRecords] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -14,11 +11,11 @@ function AttendancePreview() {
     setIsLoading(true);
     setError("");
 
-    const loader = selectedRecordId ? getStudentAttendance(selectedRecordId) : getAttendanceSummary();
-
-    return loader
-      .then((data) => {
-        setAttendanceData(data || {});
+    // Both endpoints are scoped to the logged-in student by the backend.
+    return Promise.all([getAttendanceSummary(), getMyAttendance()])
+      .then(([summaryData, recordList]) => {
+        setSummary(summaryData || {});
+        setRecords(Array.isArray(recordList) ? recordList : []);
       })
       .catch((attendanceError) => {
         setError(attendanceError.message || "Unable to load attendance records.");
@@ -26,32 +23,20 @@ function AttendancePreview() {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [selectedRecordId]);
+  }, []);
 
   const stats = useMemo(() => {
     const values = [
-      ["Present", attendanceData.present_count],
-      ["Absent", attendanceData.absent_count],
-      ["Late", attendanceData.late_count],
-      ["Total", attendanceData.total_count || attendanceData.count],
+      ["Present", summary.present],
+      ["Absent", summary.absent],
+      ["Late", summary.late],
+      ["Total", summary.total],
     ];
 
     return values.filter(([, value]) => value !== undefined && value !== null);
-  }, [attendanceData]);
+  }, [summary]);
 
-  const recentRecords = useMemo(() => {
-    const records = normalizeCollectionResponse(attendanceData);
-
-    if (records.length) {
-      return records;
-    }
-
-    if (attendanceData?.id && attendanceData?.student_name) {
-      return [attendanceData];
-    }
-
-    return Array.isArray(attendanceData.recent_records) ? attendanceData.recent_records : [];
-  }, [attendanceData]);
+  const recentRecords = records;
 
   useEffect(() => {
     void Promise.resolve().then(loadAttendance);
@@ -62,7 +47,7 @@ function AttendancePreview() {
       <div className="panel-header">
         <div>
           <h3>Attendance Records</h3>
-          <p>{selectedRecordId ? "Selected attendance record from the API." : "Latest attendance records from the API."}</p>
+          <p>Your attendance summary and most recent records.</p>
         </div>
         <button className="panel-action" type="button" onClick={loadAttendance} disabled={isLoading}>
           {isLoading ? "Loading..." : "Refresh"}

@@ -1,37 +1,36 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
 import DashboardLayout from "../../components/DashboardLayout";
-import { getStudentProfile } from "../../services/portalDataService";
-import { getCurrentUser } from "../../utils/authStorage";
-import { getDisplayName, getStudentId } from "../../utils/portalIdentity";
+import { getMyStudentDetail } from "../../services/portalDataService";
+import { getDisplayName } from "../../utils/portalIdentity";
 import { studentNavItems } from "./studentNavItems";
 
 function StudentDetails() {
-  const [searchParams] = useSearchParams();
-  const user = getCurrentUser();
-  const fallbackStudentId = useMemo(() => getStudentId(user, searchParams.get("studentId")), [searchParams, user]);
   const [state, setState] = useState({ isLoading: true, error: "", student: null });
 
   const loadStudent = useCallback(() => {
-    if (!fallbackStudentId) {
-      setState({ isLoading: false, error: "Unable to determine the current student profile.", student: null });
-      return Promise.resolve();
-    }
-
     setState({ isLoading: true, error: "", student: null });
 
-    return getStudentProfile(fallbackStudentId)
+    // The backend scopes /students/ to the logged-in student's own record, so
+    // we resolve "me" from the list rather than guessing an id from the token.
+    return getMyStudentDetail()
       .then((student) => {
+        if (!student) {
+          setState({ isLoading: false, error: "No student profile is linked to this account.", student: null });
+          return;
+        }
         setState({ isLoading: false, error: "", student });
       })
       .catch((fetchError) => {
         setState({ isLoading: false, error: fetchError.message || "Unable to load student profile.", student: null });
       });
-  }, [fallbackStudentId]);
+  }, []);
 
   useEffect(() => {
     void Promise.resolve().then(loadStudent);
   }, [loadStudent]);
+
+  const student = state.student;
+  const enrollment = student?.current_enrollment || {};
 
   return (
     <DashboardLayout
@@ -43,7 +42,7 @@ function StudentDetails() {
         <div className="panel-header">
           <div>
             <h3>Profile</h3>
-            <p>Basic student information from the API.</p>
+            <p>Your personal information from the school records.</p>
           </div>
           <button className="panel-action" type="button" onClick={loadStudent} disabled={state.isLoading}>
             {state.isLoading ? "Loading..." : "Refresh"}
@@ -53,37 +52,51 @@ function StudentDetails() {
         {state.isLoading ? <p className="panel-note">Loading student profile...</p> : null}
         {!state.isLoading && state.error ? <p className="panel-note panel-note-error">{state.error}</p> : null}
 
-        {!state.isLoading && state.student ? (
+        {!state.isLoading && student ? (
           <div className="detail-grid">
             <div>
               <span>Full Name</span>
-              <strong>{getDisplayName(state.student)}</strong>
+              <strong>{getDisplayName(student)}</strong>
             </div>
             <div>
               <span>Admission Number</span>
-              <strong>{state.student.admission_number || state.student.admission_no || "-"}</strong>
+              <strong>{student.admission_number || "-"}</strong>
             </div>
             <div>
               <span>Class</span>
-              <strong>{state.student.class_name || state.student.class || "-"}</strong>
+              <strong>{enrollment.grade_name || student.current_class || "-"}</strong>
             </div>
             <div>
               <span>Stream</span>
-              <strong>{state.student.stream_name || state.student.stream || "-"}</strong>
+              <strong>{enrollment.stream_name || "-"}</strong>
             </div>
             <div>
               <span>Gender</span>
-              <strong>{state.student.gender || "-"}</strong>
+              <strong>{formatGender(student.gender)}</strong>
             </div>
             <div>
               <span>Status</span>
-              <strong>{state.student.status || state.student.enrollment_status || "-"}</strong>
+              <strong>{student.status || "-"}</strong>
+            </div>
+            <div>
+              <span>School</span>
+              <strong>{student.school_name || "-"}</strong>
+            </div>
+            <div>
+              <span>Academic Year</span>
+              <strong>{enrollment.academic_year_name || "-"}</strong>
             </div>
           </div>
         ) : null}
       </section>
     </DashboardLayout>
   );
+}
+
+function formatGender(value) {
+  if (value === "M") return "Male";
+  if (value === "F") return "Female";
+  return value || "-";
 }
 
 export default StudentDetails;

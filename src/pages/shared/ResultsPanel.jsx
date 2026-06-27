@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { downloadReportCard, getAnnualResults, getExamReportCards, getStudentProfile, getTermResults } from "../../services/portalDataService";
+import { downloadReportCard, getAnnualResults, getExamReportCards, getMyStudentDetail, getStudentProfile, getTermResults } from "../../services/portalDataService";
 import { getCurrentUser, getUserRole, isParentRole } from "../../utils/authStorage";
 import {
   getDisplayName,
   getPreferredTermId,
   getRecordId,
   getStudentEnrollmentId,
-  getStudentId,
 } from "../../utils/portalIdentity";
 
 function ResultsPanel({ variant = "term-results" }) {
@@ -16,34 +15,34 @@ function ResultsPanel({ variant = "term-results" }) {
   const [studentState, setStudentState] = useState({ isLoading: true, error: "", student: null });
   const [collectionState, setCollectionState] = useState({ isLoading: true, error: "", items: [] });
 
-  const selectedStudentId = useMemo(() => {
-    const queryStudentId = searchParams.get("studentId");
-
-    if (queryStudentId) {
-      return queryStudentId;
-    }
-
-    return isParentRole(getUserRole(user)) ? null : getStudentId(user);
-  }, [searchParams, user]);
+  // Parents pick a child via ?studentId=; students resolve their OWN record
+  // from the backend-scoped list (the token has no Student id to guess from).
+  const isParent = useMemo(() => isParentRole(getUserRole(user)), [user]);
+  const childStudentId = useMemo(
+    () => (isParent ? searchParams.get("studentId") : null),
+    [isParent, searchParams],
+  );
   const enrollmentId = useMemo(() => getStudentEnrollmentId(studentState.student), [studentState.student]);
   const termId = useMemo(() => getPreferredTermId(studentState.student), [studentState.student]);
 
   const loadStudent = useCallback(() => {
-    if (!selectedStudentId) {
-      setStudentState({ isLoading: false, error: "Unable to determine the current student profile.", student: null });
+    setStudentState({ isLoading: true, error: "", student: null });
+
+    if (isParent && !childStudentId) {
+      setStudentState({ isLoading: false, error: "Select a child to view their results.", student: null });
       return Promise.resolve();
     }
 
-    setStudentState({ isLoading: true, error: "", student: null });
+    const request = isParent ? getStudentProfile(childStudentId) : getMyStudentDetail();
 
-    return getStudentProfile(selectedStudentId)
+    return request
       .then((student) => {
         setStudentState({ isLoading: false, error: "", student });
       })
       .catch((fetchError) => {
         setStudentState({ isLoading: false, error: fetchError.message || "Unable to load student profile.", student: null });
       });
-  }, [selectedStudentId]);
+  }, [isParent, childStudentId]);
 
   const loadCollection = useCallback(() => {
     setCollectionState({ isLoading: true, error: "", items: [] });
@@ -70,12 +69,17 @@ function ResultsPanel({ variant = "term-results" }) {
   }, [loadCollection, variant]);
 
   const visibleCollectionItems = useMemo(() => {
-    if (!selectedStudentId) {
-      return collectionState.items;
+    // A student's result endpoints are already scoped to them by the backend, so
+    // show everything returned. A parent narrows the (multi-child) results down
+    // to the selected child.
+    if (isParent && childStudentId) {
+      return collectionState.items.filter((item) =>
+        recordBelongsToStudent(item, childStudentId, studentState.student),
+      );
     }
 
-    return collectionState.items.filter((item) => recordBelongsToStudent(item, selectedStudentId, studentState.student));
-  }, [collectionState.items, selectedStudentId, studentState.student]);
+    return collectionState.items;
+  }, [collectionState.items, isParent, childStudentId, studentState.student]);
 
   const handleDownloadReportCard = async () => {
     if (!enrollmentId || !termId) {

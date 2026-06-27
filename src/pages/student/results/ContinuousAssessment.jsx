@@ -1,5 +1,5 @@
 import DashboardLayout from "../../../components/DashboardLayout";
-import ResultsPanel from "../../shared/ResultsPanel";
+import ContinuousAssessmentMarks from "../../shared/ContinuousAssessmentMarks";
 import { studentNavItems } from "../studentNavItems";
 
 function ContinuousAssessment() {
@@ -9,7 +9,7 @@ function ContinuousAssessment() {
       subtitle="View coursework, quizzes, assignments, and other continuous assessment marks."
       navItems={studentNavItems}
     >
-      <ResultsPanel variant="exam-cards" />
+      <ContinuousAssessmentMarks self />
     </DashboardLayout>
   );
 }
