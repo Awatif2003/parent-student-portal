@@ -43,12 +43,22 @@ export const clearAuthSession = () => {
 
 export const isAuthenticated = () => Boolean(getAccessToken() || getRefreshToken());
 
+const FAMILY_ROLE_CODENAMES = ["parent", "guardian", "student"];
+
+const isFamilyAssignment = (assignment) =>
+  FAMILY_ROLE_CODENAMES.includes(String(assignment?.role_codename || "").toLowerCase());
+
 export const getPrimaryRoleAssignment = (user) => {
   if (!Array.isArray(user?.role_assignments)) {
     return null;
   }
 
+  // This is the family (parent/student) portal, so always resolve the user's
+  // family role even when they ALSO hold a staff role (e.g. a Class Teacher who
+  // is also a Parent). Otherwise a staff assignment flagged primary would win
+  // and the parent role would look "deactivated" here.
   return (
+    user.role_assignments.find((assignment) => assignment.is_active && isFamilyAssignment(assignment)) ||
     user.role_assignments.find((assignment) => assignment.is_primary && assignment.is_active) ||
     user.role_assignments.find((assignment) => assignment.is_active) ||
     user.role_assignments[0]

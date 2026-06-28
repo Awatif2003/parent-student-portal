@@ -136,6 +136,9 @@ function buildRequestInit(options = {}) {
   const token = localStorage.getItem("accessToken");
   const headers = {
     "Content-Type": "application/json",
+    // Declare this as the family (parent/student) portal so the backend scopes
+    // the user to their own children/record even if they also hold staff roles.
+    "X-Portal": "family",
     ...options.headers,
   };
 

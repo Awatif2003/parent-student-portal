@@ -1,5 +1,5 @@
 import { apiRequest } from "./api";
-import { clearAuthSession, saveAuthSession } from "../utils/authStorage";
+import { clearAuthSession, getPrimaryRoleAssignment, saveAuthSession } from "../utils/authStorage";
 import { PARENT_STUDENT_ENDPOINTS } from "./parentStudentEndpoints";
 
 export const AUTH_ENDPOINTS = {
@@ -88,11 +88,9 @@ function normalizeUserProfile(user) {
   }
 
   const profile = user.data && typeof user.data === "object" ? user.data : user;
-  const primaryRoleAssignment =
-    Array.isArray(profile.role_assignments) &&
-    (profile.role_assignments.find((assignment) => assignment.is_primary && assignment.is_active) ||
-      profile.role_assignments.find((assignment) => assignment.is_active) ||
-      profile.role_assignments[0]);
+  // Use the shared family-first selector so the derived role/tenant matches what
+  // getUserRole resolves (parent/student preferred over any staff role).
+  const primaryRoleAssignment = getPrimaryRoleAssignment(profile);
 
   if (!primaryRoleAssignment) {
     return profile;
