@@ -81,12 +81,22 @@ function ResultsPanel({ variant = "term-results" }) {
     return collectionState.items;
   }, [collectionState.items, isParent, childStudentId, studentState.student]);
 
+  // The PDF download needs an enrollment + term. The student profile carries no
+  // term, so we take them from the loaded report card (a term-result row, which
+  // has both). Fall back to the profile's enrollment if no card is loaded yet.
+  const downloadEnrollmentId = visibleCollectionItems[0]?.enrollment || enrollmentId;
+  const downloadTermId = visibleCollectionItems[0]?.term || termId;
+
   const handleDownloadReportCard = async () => {
-    if (!enrollmentId || !termId) {
+    if (!downloadEnrollmentId || !downloadTermId) {
       return;
     }
 
-    await downloadReportCard(enrollmentId, termId, `report-card-${enrollmentId}-${termId}.pdf`);
+    await downloadReportCard(
+      downloadEnrollmentId,
+      downloadTermId,
+      `report-card-${downloadEnrollmentId}-${downloadTermId}.pdf`,
+    );
   };
 
   if (variant === "report-card") {
@@ -113,20 +123,20 @@ function ResultsPanel({ variant = "term-results" }) {
             </div>
             <div>
               <span>Enrollment</span>
-              <strong>{enrollmentId || "-"}</strong>
+              <strong>{downloadEnrollmentId || "-"}</strong>
             </div>
             <div>
               <span>Term</span>
-              <strong>{termId || "-"}</strong>
+              <strong>{downloadTermId || "-"}</strong>
             </div>
           </div>
         ) : null}
 
         <div className="action-row">
-          <button className="primary-button" type="button" onClick={handleDownloadReportCard} disabled={!enrollmentId || !termId}>
+          <button className="primary-button" type="button" onClick={handleDownloadReportCard} disabled={!downloadEnrollmentId || !downloadTermId}>
             Download report card
           </button>
-          {!enrollmentId || !termId ? <p className="panel-note">A report card requires both enrollment and term identifiers.</p> : null}
+          {!downloadEnrollmentId || !downloadTermId ? <p className="panel-note">A report card requires both enrollment and term identifiers.</p> : null}
         </div>
 
         <div className="data-panel data-panel-spaced">
@@ -393,6 +403,12 @@ function normalizeResultCollection(data) {
 
   if (Array.isArray(data?.data)) {
     return data.data;
+  }
+
+  // The report-card `generate` action returns { success, data: <object> } — a
+  // single report card rather than a list. Wrap it so the grid can render it.
+  if (data?.data && typeof data.data === "object") {
+    return [data.data];
   }
 
   return data?.id ? [data] : [];

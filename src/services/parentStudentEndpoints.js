@@ -46,7 +46,10 @@ export const PARENT_STUDENT_ENDPOINTS = {
     termResults: "/exams/term-results/",
     termResultDetail: (id) => `/exams/term-results/${id}/`,
     termResultsByStream: "/exams/term-results/by-stream/",
-    reportCards: "/exams/report-cards/",
+    // NOTE: the bare /exams/report-cards/ list route is a placeholder that
+    // always returns []. Report cards are derived from termResults instead
+    // (see getExamReportCards), which is scoped to the caller and already
+    // carries enrollment, term, subject grades and the term summary.
     annualResults: "/exams/annual-results/",
     // Live marks (visible before results are published) for one student.
     continuousAssessment: "/exams/marks/continuous-assessment/",

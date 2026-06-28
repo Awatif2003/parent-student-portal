@@ -56,7 +56,29 @@ export const getReportCard = (enrollmentId, termId) =>
 export const downloadReportCard = (enrollmentId, termId, filename = "report-card.pdf") =>
   apiDownload(PARENT_STUDENT_ENDPOINTS.reports.reportCard(enrollmentId, termId), filename);
 
-export const getExamReportCards = () => apiRequest(PARENT_STUDENT_ENDPOINTS.exams.reportCards);
+// Report cards for the caller. The bare /exams/report-cards/ list is a
+// placeholder that always returns []; instead we derive cards from term-results,
+// which is backend-scoped to the caller (student → self, guardian → children).
+//
+// The term-results LIST is a lightweight shape (no term id, no subject grades),
+// so for each result we fetch its detail (the full serializer), which carries
+// the term id, subject grades and term summary — everything a report card needs
+// to render and to drive the PDF download.
+export const getExamReportCards = () =>
+  apiRequest(PARENT_STUDENT_ENDPOINTS.exams.termResults)
+    .then((data) => normalizeCollectionResponse(data))
+    .then((rows) =>
+      Promise.all(
+        rows.map((row) =>
+          apiRequest(PARENT_STUDENT_ENDPOINTS.exams.termResultDetail(row.id)).then((full) => ({
+            enrollment: full.enrollment,
+            term: full.term,
+            term_result: full,
+            subject_grades: full.subject_grades || [],
+          })),
+        ),
+      ),
+    );
 
 // Continuous-assessment (live) marks for a specific student. The backend
 // authorizes the caller: a student only ever sees their own (get_queryset

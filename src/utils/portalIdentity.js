@@ -49,6 +49,7 @@ export function getStudentEnrollmentId(student) {
   return firstDefined(
     student?.enrollment_id,
     student?.current_enrollment_id,
+    student?.current_enrollment?.id,
     student?.enrollment?.id,
     student?.latest_enrollment?.id,
     student?.active_enrollment?.id,
