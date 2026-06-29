@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 
-import { ComingSoon } from "@/components/ComingSoon"
+import { TermResultsPage } from "@/features/results/pages/TermResultsPage"
 
 export const Route = createFileRoute("/_app/parent/results/term-results")({
-  component: () => <ComingSoon title="Annual Results" eyebrow="Results" />,
+  component: TermResultsPage,
 })

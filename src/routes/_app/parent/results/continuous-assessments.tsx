@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 
-import { ComingSoon } from "@/components/ComingSoon"
+import { ContinuousAssessmentPage } from "@/features/results/pages/ContinuousAssessmentPage"
 
 export const Route = createFileRoute("/_app/parent/results/continuous-assessments")({
-  component: () => <ComingSoon title="Continuous Assessment" eyebrow="Results" />,
+  component: ContinuousAssessmentPage,
 })

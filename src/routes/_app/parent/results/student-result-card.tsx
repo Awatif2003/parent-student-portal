@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 
-import { ComingSoon } from "@/components/ComingSoon"
+import { ResultCardPage } from "@/features/results/pages/ResultCardPage"
 
 export const Route = createFileRoute("/_app/parent/results/student-result-card")({
-  component: () => <ComingSoon title="Result Card" eyebrow="Results" />,
+  component: ResultCardPage,
 })

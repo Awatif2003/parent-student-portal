@@ -66,7 +66,7 @@ const parentNav: NavItem[] = [
     icon: "graduationCap",
     children: [
       { label: "Continuous Assessment", to: "/parent/results/continuous-assessments", icon: "clipboardCheck" },
-      { label: "Annual Results", to: "/parent/results/term-results", icon: "fileText" },
+      { label: "Term Results", to: "/parent/results/term-results", icon: "fileText" },
       { label: "Result Card", to: "/parent/results/student-result-card", icon: "idCard" },
     ],
   },
