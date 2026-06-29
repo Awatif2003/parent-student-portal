@@ -96,6 +96,7 @@ export const FINANCE = {
   INVOICE_DETAIL: (id: string | number) => `/finance/invoices/${id}/`,
   PAYMENTS: "/finance/payments/",
   PAYMENT_DETAIL: (id: string | number) => `/finance/payments/${id}/`,
+  PAYMENT_RECEIPT: (id: string | number) => `/finance/payments/${id}/receipt/`,
   DAILY_COLLECTION: "/finance/payments/daily_collection/",
 } as const
 

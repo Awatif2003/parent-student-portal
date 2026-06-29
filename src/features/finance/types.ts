@@ -38,3 +38,41 @@ export interface Payment extends Dict {
   method?: string
   payment_method?: string
 }
+
+/** Printable receipt payload from `GET /finance/payments/{id}/receipt/`. */
+export interface Receipt {
+  id: string
+  receipt_number: string
+  payment_date: string
+  amount: string
+  payment_method_display: string
+  reference_number: string
+  paid_by_name: string
+  paid_by_phone: string
+  received_by_name: string
+  notes: string
+  is_verified: boolean
+  is_cancelled: boolean
+  balance_after: string | null
+  school: {
+    name: string
+    code: string
+    address: string
+    city: string
+    region: string
+    phone: string
+    email: string
+    motto: string
+    logo_url: string
+  }
+  student: { id: string; name: string; admission_number: string; stream: string }
+  invoice: {
+    id: string
+    invoice_number: string
+    term: string
+    total_amount: string
+    paid_amount: string
+    balance: string
+    status: string
+  }
+}
