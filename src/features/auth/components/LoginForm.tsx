@@ -69,8 +69,7 @@ export function LoginForm() {
         <div className="absolute inset-0 bg-[linear-gradient(105deg,oklch(0.30_0.06_188/0.92)_0%,oklch(0.40_0.08_186/0.55)_55%,oklch(0.49_0.10_184/0.15)_100%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(0deg,oklch(0.28_0.05_188/0.55)_0%,transparent_55%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.14),transparent_30%)]" />
-        <div className="relative flex w-full flex-col justify-between px-12 py-14">
-          <BrandLogo variant="icon" markClassName="size-11" />
+        <div className="relative flex w-full flex-col justify-end px-12 py-14">
           <div className="max-w-md">
             <h1 className="text-3xl font-semibold leading-tight tracking-tight">
               Stay close to your child&apos;s school journey.
