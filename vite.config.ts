@@ -14,5 +14,7 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
+    // Expose the dev server on the LAN so phones/other devices can reach it.
+    host: true,
   },
 })
